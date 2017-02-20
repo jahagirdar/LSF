@@ -2,6 +2,7 @@ package LSF::Job; $VERSION = 0.7;
 
 use strict;
 use warnings;
+use Smart::Comments;
 use base qw( LSF );
 # sugar so that we can use job id's in strings
 use overload '""' => sub{ $_[0]->{-id} };
@@ -60,11 +61,15 @@ sub jobs{
 sub submit{
     my ($self,@params) = @_;
     my @output;
+    ### @params
     @output = $self->do_it('bsub',@params);
     return unless @output;
+    ### @output
+    # It seems that different versions of LSF put out the Job ID on different lines... Instead of doing a version specific search I am joining the first two lines and searching
     my $idx = 0;
     $idx = 1 if $self->LSF =~ /^4/;
-    $output[$idx] =~ /Job <(\d+)>/;
+    my $str=$output[0].$output[1];
+    $str =~ /Job <(\d+)>/;
     return $self->new($1);
 }
 
@@ -84,7 +89,8 @@ sub submit_pos{
     my $h = start( ['bsub',@params], \undef, \$output[0], \$output[1] );
     my $idx = $self->LSF =~ /^4/;
     pump( $h );
-    if( $output[$idx] =~ /Job <(\d+)>/ ){
+    my $str=$output[0].$output[1];
+    if( $str =~ /Job <(\d+)>/ ){
         $job = $self->new($1);
         # do post processing, assuming that the command succeeded
         # because we got the jobid back

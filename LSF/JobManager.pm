@@ -109,16 +109,19 @@ sub clear{
 
 # internal sub to parse a facile command line of flags 
 # for name=value pairs
+# jvs: This routine has problems it splits an option -cwd into -c=wd and overrides the -c default flag or the -cn flag
+# jvs: on the other hand things like -I, -Ip, -Is are muteex so if default was -I you want tooverride it with -Is
+# For the time being we are going to ignore the mutex and assume that two multi character options are independent. TODO Fix This
 sub parse_flags{
     my @defaults = @_;
     my %hash;
     while(local $_ = shift @defaults){
-        if(/^(-\w)(.*)/){
-            my($flag,$value) = ($1,$2);
+        if(/^(-\w*)/){
+            my($flag,$value) = ($1,'');
             if($value ne ''){
                 $hash{$flag} = $value;
             }elsif($defaults[0] !~ /^-\w/){
-                $hash{$flag} = shift @defaults;
+                $hash{$flag} = shift @defaults; #jvs: TODO This may fail when we have something like -Is <cmd>
             }else{
                 $hash{$flag} = undef;
             }
